@@ -4,7 +4,7 @@ import (
 	"os"
 	"strings"
 	//	"path/filepath"
-	. "github.com/leanote/leanote/app/lea"
+	. "github.com/JacobXie/leanote/app/lea"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -27,7 +27,7 @@ func WriteUrl(url string, toPath string) (length int64, newFilename, path string
 	length = int64(len(content))
 
 	// a.html?a=a11&xxx
-	url = trimQueryParams(url)
+	url = TrimQueryParams(url)
 	_, ext := SplitFilename(url)
 	if toPath == "" {
 		toPath = "/tmp"
@@ -75,7 +75,8 @@ func GetContent(url string) (content []byte, err error) {
 }
 
 // 将url ?, #后面的字符串去掉
-func trimQueryParams(url string) string {
+//modified by JacobXie
+func TrimQueryParams(url string) string {
 	pos := strings.Index(url, "?")
 	if pos != -1 {
 		url = Substr(url, 0, pos)

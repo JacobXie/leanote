@@ -3,10 +3,10 @@ package api
 import (
 	"github.com/revel/revel"
 	//	"encoding/json"
-	//	. "github.com/leanote/leanote/app/lea"
+	//	. "github.com/JacobXie/leanote/app/lea"
 	//	"gopkg.in/mgo.v2/bson"
-	//	"github.com/leanote/leanote/app/lea/netutil"
-	//	"github.com/leanote/leanote/app/info"
+	//	"github.com/JacobXie/leanote/app/lea/netutil"
+	//	"github.com/JacobXie/leanote/app/info"
 	//	"io/ioutil"
 	"os"
 	//	"strconv"
@@ -65,9 +65,14 @@ func (c ApiFile) GetImage(fileId string) revel.Result {
 	if path == "" {
 		return c.RenderText("")
 	}
-	fn := revel.BasePath + "/" + strings.TrimLeft(path, "/")
-	file, _ := os.Open(fn)
-	return c.RenderFile(file, revel.Inline) // revel.Attachment
+	//modified by JacobXie
+	if qiniuService.IsUseQiniu(){
+		return c.Redirect(qiniuService.GetUrlOnQiniu(strings.TrimLeft(path,"/")))
+	}	else {
+		fn := revel.BasePath + "/" + strings.TrimLeft(path, "/")
+		file, _ := os.Open(fn)
+		return c.RenderFile(file, revel.Inline) // revel.Attachment
+	}
 }
 
 // 下载附件

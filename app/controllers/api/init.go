@@ -1,9 +1,9 @@
 package api
 
 import (
-	"github.com/leanote/leanote/app/info"
-	"github.com/leanote/leanote/app/service"
-	//		. "github.com/leanote/leanote/app/lea"
+	"github.com/JacobXie/leanote/app/info"
+	"github.com/JacobXie/leanote/app/service"
+	//		. "github.com/JacobXie/leanote/app/lea"
 	"github.com/revel/revel"
 	"strings"
 )
@@ -27,6 +27,8 @@ var attachService *service.AttachService
 var configService *service.ConfigService
 var emailService *service.EmailService
 var sessionService *service.SessionService
+//modified by JacobXie
+var qiniuService *service.QiniuService
 
 var pageSize = 1000
 var defaultSortField = "UpdatedTime"
@@ -141,4 +143,6 @@ func InitService() {
 	configService = service.ConfigS
 	emailService = service.EmailS
 	sessionService = service.SessionS
+	//modified by JacobXie
+	qiniuService = service.QiniuS
 }

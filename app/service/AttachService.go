@@ -1,9 +1,9 @@
 package service
 
 import (
-	"github.com/leanote/leanote/app/db"
-	"github.com/leanote/leanote/app/info"
-	. "github.com/leanote/leanote/app/lea"
+	"github.com/JacobXie/leanote/app/db"
+	"github.com/JacobXie/leanote/app/info"
+	. "github.com/JacobXie/leanote/app/lea"
 	"github.com/revel/revel"
 	"gopkg.in/mgo.v2/bson"
 	"os"
@@ -110,7 +110,12 @@ func (this *AttachService) DeleteAllAttachs(noteId, userId string) bool {
 		db.ListByQ(db.Attachs, bson.M{"NoteId": bson.ObjectIdHex(noteId)}, &attachs)
 		for _, attach := range attachs {
 			attach.Path = strings.TrimLeft(attach.Path, "/")
-			os.Remove(revel.BasePath + "/" + attach.Path)
+			//modified by JacobXie
+			if qiniuService.IsUseQiniu(){
+				qiniuService.DeleteOnQiniu(attach.Path)
+			}	else {
+				os.Remove(revel.BasePath + "/" + attach.Path)
+			}
 		}
 		return true
 	}
@@ -132,7 +137,13 @@ func (this *AttachService) DeleteAttach(attachId, userId string) (bool, string) 
 		if db.Delete(db.Attachs, bson.M{"_id": bson.ObjectIdHex(attachId)}) {
 			this.updateNoteAttachNum(attach.NoteId, -1)
 			attach.Path = strings.TrimLeft(attach.Path, "/")
-			err := os.Remove(revel.BasePath + "/" + attach.Path)
+			//modified by JacobXie
+			var err error
+			if qiniuService.IsUseQiniu(){
+				err = qiniuService.DeleteOnQiniu(attach.Path)
+			}	else {
+				err = os.Remove(revel.BasePath + "/" + attach.Path)
+			}
 			if err == nil {
 				// userService.UpdateAttachSize(note.UserId.Hex(), -attach.Size)
 				// 修改note Usn
@@ -202,11 +213,17 @@ func (this *AttachService) CopyAttachs(noteId, toNoteId, toUserId string) bool {
 		newFilename := NewGuid() + ext
 		dir := "files/" + toUserId + "/attachs"
 		filePath := dir + "/" + newFilename
-		err := os.MkdirAll(revel.BasePath+"/"+dir, 0755)
-		if err != nil {
-			return false
+		//modified by JacobXie
+		var err error
+		if qiniuService.IsUseQiniu(){
+			err = qiniuService.CopyOnQiniu(attach.Path, filePath)
+		} else {
+			err = os.MkdirAll(revel.BasePath+"/"+dir, 0755)
+			if err != nil {
+				return false
+			}
+			_, err = CopyFile(revel.BasePath+"/"+attach.Path, revel.BasePath+"/"+filePath)
 		}
-		_, err = CopyFile(revel.BasePath+"/"+attach.Path, revel.BasePath+"/"+filePath)
 		if err != nil {
 			return false
 		}

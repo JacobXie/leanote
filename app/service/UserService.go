@@ -1,9 +1,9 @@
 package service
 
 import (
-	"github.com/leanote/leanote/app/db"
-	"github.com/leanote/leanote/app/info"
-	. "github.com/leanote/leanote/app/lea"
+	"github.com/JacobXie/leanote/app/db"
+	"github.com/JacobXie/leanote/app/info"
+	. "github.com/JacobXie/leanote/app/lea"
 	"gopkg.in/mgo.v2/bson"
 	"strings"
 	"time"
@@ -287,11 +287,15 @@ func (this *UserService) GetUserInfoByName(emailOrUsername string) info.User {
 
 // 更新username
 func (this *UserService) UpdateUsername(userId, username string) (bool, string) {
-	if userId == "" || username == "" || username == "admin" { // admin用户是内置的, 不能设置
-		return false, "usernameIsExisted"
-	}
-	usernameRaw := username // 原先的, 可能是同一个, 但有大小写
-	username = strings.ToLower(username)
+	//modified by JacobXie
+		if userId == configService.adminUserId{//admin 不能修改用户名
+				return false, "admin is not permitted for midification"
+		}
+		usernameRaw := username // 原先的, 可能是同一个, 但有大小写
+		username = strings.ToLower(username)
+		if userId == "" || username == "" || username == "admin" { // admin用户是内置的, 不能设置
+			return false, "usernameIsExisted"
+		}
 
 	// 先判断是否存在
 	userIdO := bson.ObjectIdHex(userId)

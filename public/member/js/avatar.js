@@ -13,7 +13,7 @@ define('avatar', ['fileupload'], function(){
         }
         return (bytes / 1000).toFixed(2) + ' KB';
     }
-    
+
     function setDropStyle(dropzoneId, formId) {
 	    // drag css
 	    var dropZone = $(dropzoneId);
@@ -43,7 +43,7 @@ define('avatar', ['fileupload'], function(){
 		    }, 100);
 		});
     }
-    
+
     setDropStyle("#dropAvatar", "#uploadAvatar");
     $('.dropzone .btn-choose-file').click(function() {
         $(this).parent().find('input').click();
@@ -62,7 +62,7 @@ define('avatar', ['fileupload'], function(){
             // Add the HTML to the UL element
             $msg2.html(tpl);
             data.context = $msg2;
-            
+
             // 检查文件大小
             var size = data.files[0].size;
             var maxFileSize = +GlobalConfigs["uploadAvatarSize"] || 100;
@@ -77,7 +77,7 @@ define('avatar', ['fileupload'], function(){
                 })(tpl), 3000);
             	return;
             }
-            
+
             // Automatically upload the file once it is added to the queue
             var jqXHR;
             setTimeout(function() {
@@ -88,7 +88,9 @@ define('avatar', ['fileupload'], function(){
             if (data.result.Ok == true) {
                 data.context.html("");
                 var re = data.result;
-                $("#avatar").attr("src", UrlPrefix + "/" + re.Id);
+                //modified by JacobXie
+                //$("#avatar").attr("src", UrlPrefix + "/" + re.Id);
+                $("#avatar").attr("src", re.Id);
             } else {
                 var re = data.result;
                 data.context.html("");

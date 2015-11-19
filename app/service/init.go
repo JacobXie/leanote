@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/leanote/leanote/app/db"
+	"github.com/JacobXie/leanote/app/db"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"net/url"
@@ -36,6 +36,8 @@ var AuthS *AuthService
 var UpgradeS *UpgradeService
 var SessionS, sessionService *SessionService
 var ThemeS, themeService *ThemeService
+//modified by JacobXie
+var QiniuS, qiniuService *QiniuService
 
 // onAppStart调用
 func InitService() {
@@ -61,6 +63,8 @@ func InitService() {
 	UpgradeS = &UpgradeService{}
 	SessionS = &SessionService{}
 	ThemeS = &ThemeService{}
+	//modified by JacobXie
+	QiniuS = &QiniuService{}
 
 	notebookService = NotebookS
 	noteService = NoteS
@@ -80,6 +84,8 @@ func InitService() {
 	emailService = EmailS
 	sessionService = SessionS
 	themeService = ThemeS
+	//modified by JacobXie
+	qiniuService = QiniuS
 }
 
 //----------------

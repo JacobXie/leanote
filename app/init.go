@@ -3,15 +3,15 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/leanote/leanote/app/controllers"
-	"github.com/leanote/leanote/app/controllers/admin"
-	"github.com/leanote/leanote/app/controllers/api"
-	"github.com/leanote/leanote/app/controllers/member"
-	"github.com/leanote/leanote/app/db"
-	. "github.com/leanote/leanote/app/lea"
-	_ "github.com/leanote/leanote/app/lea/binder"
-	"github.com/leanote/leanote/app/lea/route"
-	"github.com/leanote/leanote/app/service"
+	"github.com/JacobXie/leanote/app/controllers"
+	"github.com/JacobXie/leanote/app/controllers/admin"
+	"github.com/JacobXie/leanote/app/controllers/api"
+	"github.com/JacobXie/leanote/app/controllers/member"
+	"github.com/JacobXie/leanote/app/db"
+	. "github.com/JacobXie/leanote/app/lea"
+	_ "github.com/JacobXie/leanote/app/lea/binder"
+	"github.com/JacobXie/leanote/app/lea/route"
+	"github.com/JacobXie/leanote/app/service"
 	"github.com/revel/revel"
 	"html/template"
 	"math"
@@ -421,6 +421,9 @@ func init() {
 		admin.InitService()
 		member.InitService()
 		service.ConfigS.InitGlobalConfigs()
+		//modified by JacobXie
+		service.QiniuS.InitQiniu()
+
 		api.InitService()
 	})
 }

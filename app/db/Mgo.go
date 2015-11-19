@@ -2,11 +2,13 @@ package db
 
 import (
 	"fmt"
-	. "github.com/leanote/leanote/app/lea"
+	. "github.com/JacobXie/leanote/app/lea"
+	"github.com/JacobXie/leanote/app/info"
 	"github.com/revel/revel"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"strings"
+	"time"
 )
 
 // Init mgo and the common DAO
@@ -92,7 +94,9 @@ func Init(url, dbname string) {
 		if username == "" || password == "" {
 			usernameAndPassword = ""
 		}
-		url = "mongodb://" + usernameAndPassword + host + ":" + port + "/" + dbname
+		//mpodified by JacobXie
+		//url = "mongodb://" + usernameAndPassword + host + ":" + port + "/" + dbname
+    url = fmt.Sprintf("%s%s:%s/%s", usernameAndPassword,host, port, dbname)
 	}
 	Log(url)
 
@@ -166,6 +170,184 @@ func Init(url, dbname string) {
 
 	// session
 	Sessions = Session.DB(dbname).C("sessions")
+
+	//Modified by JacobXie
+	//系统初始化，即初始化管理员和一些基本数据
+	countNum, err := Users.Count()
+	if err != nil {
+		panic(err)
+	}
+	if countNum == 0 {
+		//初始化管理员，admin，密码 admin123
+		user := info.User{}
+		user.UserId = bson.NewObjectId()
+		user.Email = "admin@leanote.com"
+		user.Verified = true
+		user.Username = "admin"
+		user.UsernameRaw = "admin"
+		user.Pwd = GenPwd("admin123")
+		user.CreatedTime = time.Now()
+		user.Theme = "simple"
+		user.NotebookWidth = 160
+		user.NoteListWidth = 266
+		Insert(Users, user)
+
+		blog_single := info.BlogSingle{}
+		blog_single.SingleId = bson.NewObjectId()
+		blog_single.UserId = user.UserId
+		blog_single.Title = "About Me"
+		blog_single.UrlTitle = "About-Me"
+		blog_single.Content = "<p>Hello,&nbsp;I am Leanote (^_^).</p>"
+		blog_single.CreatedTime = time.Now()
+		blog_single.UpdatedTime = blog_single.CreatedTime
+		Insert(BlogSingles,blog_single)
+
+		//Insert(Configs,& info.Config{ConfigId:bson.NewObjectId(), UserId:user.UserId, Key:"openRegister", ValueStr:"open" })
+		Insert(Configs,& info.Config{ConfigId:bson.NewObjectId(), UserId:user.UserId, Key:"toImageBinPath", ValueStr:"lllllllllll" })
+		Insert(Configs,& info.Config{ConfigId:bson.NewObjectId(), UserId:user.UserId, Key:"noteSubDomain", ValueStr:"" })
+		Insert(Configs,& info.Config{ConfigId:bson.NewObjectId(), UserId:user.UserId, Key:"blogSubDomain", ValueStr:"" })
+		Insert(Configs,& info.Config{ConfigId:bson.NewObjectId(), UserId:user.UserId, Key:"leaSubDomain", ValueStr:"" })
+		Insert(Configs,& info.Config{ConfigId:bson.NewObjectId(), UserId:user.UserId, Key:"recommendTags", ValueArr:[]string{"小写", "golang", "leanote",} ,IsArr:true})
+		Insert(Configs,& info.Config{ConfigId:bson.NewObjectId(), UserId:user.UserId, Key:"newTags", ValueArr:[]string{"小写", "golang", "leanote", "haha",} , IsArr:true })
+		Insert(Configs,& info.Config{ConfigId:bson.NewObjectId(), UserId:user.UserId, Key:"emailHost", ValueStr:"smtp.163.com" })
+		Insert(Configs,& info.Config{ConfigId:bson.NewObjectId(), UserId:user.UserId, Key:"emailPort", ValueStr:"25" })
+		Insert(Configs,& info.Config{ConfigId:bson.NewObjectId(), UserId:user.UserId, Key:"emailUsername", ValueStr:"" })
+		Insert(Configs,& info.Config{ConfigId:bson.NewObjectId(), UserId:user.UserId, Key:"emailPassword", ValueStr:"" })
+
+		Insert(Configs,& info.Config{ConfigId:bson.NewObjectId(), UserId:user.UserId, Key:"emailTemplateHeader", ValueStr: "<div style=\"width: 600px; margin:auto; border-radius:5px; border: 1px solid #ccc; padding: 20px;\">\r\n\t\t\t<div>\r\n\t\t\t\t<div>\r\n\t\t\t\t\t<div style=\"float:left; height: 40px;\">\r\n\t\t\t\t\t\t<a href=\"{{$.siteUrl}}\" style=\"font-size: 24px\">leanote</a>\r\n\t\t\t\t\t</div>\r\n\t\t\t\t\t<div style=\"float:left; height:40px; line-height:40px;\">\r\n\t\t\t\t\t\t&nbsp;&nbsp;| &nbsp;<span style=\"font-size:14px\">{{$.subject}}</span>\r\n\t\t\t\t\t</div>\r\n\t\t\t\t\t<div style=\"clear:both\"></div>\r\n\t\t\t\t</div>\r\n\t\t\t</div>\r\n\t\t\t<hr style=\"border:none;border-top: 1px solid #ccc\"/>\r\n\t\t\t<div style=\"margin-top: 20px; font-size: 14px;\">\r\n\t\t\t\t" })
+		Insert(Configs,& info.Config{ConfigId:bson.NewObjectId(), UserId:user.UserId, Key:"emailTemplateFooter", ValueStr:"</div>\r\n\r\n\t\t\t<div id=\"leanoteFooter\" style=\"margin-top: 30px; border-top: 1px solid #ccc\">\r\n\t\t\t\t<style>\r\n\t\t\t\t\t#leanoteFooter {\r\n\t\t\t\t\t\tcolor: #666;\r\n\t\t\t\t\t\tfont-size: 12px;\r\n\t\t\t\t\t}\r\n\t\t\t\t\t#leanoteFooter a {\r\n\t\t\t\t\t\tcolor: #666;\r\n\t\t\t\t\t\tfont-size: 12px;\r\n\t\t\t\t\t}\r\n\t\t\t\t</style>\r\n\t\t\t\t<a href=\"{{$.siteUrl}}\">leanote</a>, your own cloud note!\r\n\t\t\t</div>\r\n\t\t</div>" })
+
+		Insert(Configs,& info.Config{ConfigId:bson.NewObjectId(), UserId:user.UserId, Key:"emailTemplateRegisterSubject", ValueStr:"欢迎来到leanote, 请验证邮箱" })
+		Insert(Configs,& info.Config{ConfigId:bson.NewObjectId(), UserId:user.UserId, Key:"emailTemplateRegister", ValueStr:"{{header}}\r\n<p>\r\n{{$.user.email}} 您好, 欢迎来到leanote. \r\n</p>\r\n<p>\r\n请点击链接验证邮箱: <a href=\"{{$.tokenUrl}}\">{{$.tokenUrl}}</a>\r\n</p>\r\n<p>\r\n{{$.tokenTimeout}}小时后过期.\r\n</p>\r\n{{footer}}"})
+
+		Insert(Configs,& info.Config{ConfigId:bson.NewObjectId(), UserId:user.UserId, Key:"emailTemplateFindPasswordSubject", ValueStr:"找回密码" })
+		Insert(Configs,& info.Config{ConfigId:bson.NewObjectId(), UserId:user.UserId, Key:"emailTemplateFindPassword", ValueStr:"{{header}}\r\n<p>\r\n请点击链接修改密码 <a href=\"{{$.tokenUrl}}\">{{$.tokenUrl}}</a>\r\n</p>\r\n<p>\r\n{{$.tokenTimeout}}小时后过期.\r\n</p>\r\n\r\n{{footer}}"})
+
+		Insert(Configs,& info.Config{ConfigId:bson.NewObjectId(), UserId:user.UserId, Key:"emailTemplateUpdateEmailSubject", ValueStr:"验证邮箱" })
+		Insert(Configs,& info.Config{ConfigId:bson.NewObjectId(), UserId:user.UserId, Key:"emailTemplateUpdateEmail", ValueStr:"{{header}}\r\n<p>\r\n邮箱验证后您的登录邮箱为: {{$.newEmail}}\r\n</p>\r\n<p>\r\n请点击链接验证邮箱: <a href=\"{{$.tokenUrl}}\">{{$.tokenUrl}}</a>\r\n</p>\r\n<p>\r\n{{$.tokenTimeout}}小时后过期.\r\n</p>\r\n{{footer}}\r\n"})
+
+		Insert(Configs,& info.Config{ConfigId:bson.NewObjectId(), UserId:user.UserId, Key:"emailTemplateInviteSubject", ValueStr:"邀请注册leanote" })
+		Insert(Configs,& info.Config{ConfigId:bson.NewObjectId(), UserId:user.UserId, Key:"emailTemplateInvite", ValueStr:"{{header}}\r\n\r\n<p>您好, 您的好友{{$.user.email}}邀请您注册leanote</p>\r\n\r\n<p>Ta的留言: {{$.content}}</p>\r\n\r\n<p>点击链接注册leanote <a href=\"{{$.registerUrl}}\">{{$.registerUrl}}</a></p>\r\n\r\n{{footer}}\r\n"})
+
+		Insert(Configs,& info.Config{ConfigId:bson.NewObjectId(), UserId:user.UserId, Key:"emailTemplateCommentSubject", ValueStr:"评论提醒" })
+		Insert(Configs,& info.Config{ConfigId:bson.NewObjectId(), UserId:user.UserId, Key:"emailTemplateComment", ValueStr:"{{header}}\r\n<p>\r\n{{if $.commentedUser.isBlogAuthor}}\r\n您的博客 \"{{$.blog.title}}\" 被 {{$.commentUser.username}} 评论了.\r\n{{else}}\r\n您在 \"{{$.blog.title}}\" 发表的评论被 {{$.commentUser.username}}{{if $.commentUser.isBlogAuthor}}(作者){{end}} 评论了.\r\n{{end}}\r\n</p>\r\n\r\n<div>\r\n<b>评论内容: </b>\r\n<blockquote>{{$.commentContent}}</blockquote>\r\n</div>\r\n<p>\r\n博客链接: <a href=\"{{$.blog.url}}\">{{$.blog.url}}</a>\r\n</p>\r\n{{footer}} "})
+
+		Insert(Configs,& info.Config{ConfigId:bson.NewObjectId(), UserId:user.UserId, Key:"userFilterEmail", ValueStr:"" })
+
+		tag := info.Tag{}
+		tag.UserId = user.UserId
+		Insert(Tags,tag)
+
+		theme_elegant := info.Theme{}
+		theme_elegant.ThemeId = bson.NewObjectId()
+		theme_elegant.UserId = user.UserId
+		theme_elegant.Name = "leanote elegant"
+		theme_elegant.Version = "1.0"
+		theme_elegant.Author = "leanote.com"
+		theme_elegant.AuthorUrl = "http://leanote.com"
+		theme_elegant.Path =  "public/blog/themes/elegant"
+		theme_elegant.Info =  map[string]interface{}{ "Version" : "1.0",
+														"Author" : "leanote.com",
+														"AuthorUrl" : "http://leanote.com",
+														"FriendLinks" : []map[string]string{
+																			//map[string]string{ "Title" : "我的笔记", "Url" : "http://leanote.com/note" },
+																			//map[string]string{ "Title" : "leanote home", "Url" : "http://leanote.com" },
+																			//map[string]string{ "Title" : "leanote 社区", "Url" : "http://bbs.leanote.com" },
+																			map[string]string{ "Title" : "lea++", "Url" : "http://lea.leanote.com" },
+																			//map[string]string{ "Title" : "leanote github", "Url" : "https://github.com/leanote/leanote" },
+																		},
+														"Name" : "leanote elegant",
+														}
+		theme_elegant.IsActive =  true
+		theme_elegant.IsDefault =  true
+		theme_elegant.Style = "blog_daqi"
+		theme_elegant.CreatedTime = time.Now()
+		theme_elegant.UpdatedTime = theme_elegant.CreatedTime
+		Insert(Themes,theme_elegant)
+
+		theme_default := info.Theme{}
+		theme_default.ThemeId = bson.NewObjectId()
+		theme_default.UserId = user.UserId
+		theme_default.Name = "leanote default theme"
+		theme_default.Version = "1.0"
+		theme_default.Author =  "leanote.com"
+		theme_default.AuthorUrl = "http://leanote.com"
+		theme_default.Path = "public/blog/themes/default"
+
+		theme_default.Info = map[string]interface{}{ "AuthorUrl" : "http://leanote.com",
+														"FriendLinks" : []map[string]string{
+																			//map[string]string{ "Url" : "http://leanote.com/note", "Title" : "我的笔记" },
+																			//map[string]string{ "Title" : "leanote home", "Url" : "http://leanote.com" },
+																			//map[string]string{ "Title" : "leanote 社区", "Url" : "http://bbs.leanote.com" },
+																			map[string]string{ "Url" : "http://lea.leanote.com", "Title" : "lea++" },
+																			//map[string]string{ "Title" : "leanote github", "Url" : "https://github.com/leanote/leanote" },
+																		},
+														"Name" : "leanote default theme",
+														"Version" : "1.0",
+														"Author" : "leanote.com",
+													}
+		theme_default.IsActive = false
+		theme_default.IsDefault =  true
+		theme_default.Style = "blog_default"
+		theme_default.CreatedTime = time.Now()
+		theme_default.UpdatedTime = theme_default.CreatedTime
+		Insert(Themes,theme_default)
+
+		theme_nav_fixed := info.Theme{}
+		theme_nav_fixed.ThemeId = bson.NewObjectId()
+		theme_nav_fixed.UserId = user.UserId
+		theme_nav_fixed.Name = "leanote nav fixed"
+		theme_nav_fixed.Version  = "1.0"
+		theme_nav_fixed.Author = "leanote.com"
+		theme_nav_fixed.AuthorUrl = "http://leanote.com"
+		theme_nav_fixed.Path = "public/blog/themes/nav_fixed"
+		theme_nav_fixed.Info = map[string]interface{}{
+														"Name" : "leanote nav fixed",
+														"Version" : "1.0",
+														"Author" : "leanote.com",
+														"AuthorUrl" : "http://leanote.com",
+														"FriendLinks" :
+																		[]map[string]string{
+																			//map[string]string{ "Title" : "我的笔记","Url" : "http://leanote.com/note" },
+																			//map[string]string{ "Title" : "leanote home", "Url" : "http://leanote.com" },
+																			//map[string]string{ "Title" : "leanote 社区", "Url" : "http://bbs.leanote.com" },
+																			map[string]string{ "Title" : "lea++", "Url" : "http://lea.leanote.com" },
+																			//map[string]string{ "Title" : "leanote github", "Url" : "https://github.com/leanote/leanote" },
+																	},
+														}
+		theme_nav_fixed.IsActive = false
+		theme_nav_fixed.IsDefault = true
+		theme_nav_fixed.Style = "blog_left_fixed"
+		theme_nav_fixed.CreatedTime = time.Now()
+		theme_nav_fixed.UpdatedTime = theme_nav_fixed.CreatedTime
+		Insert(Themes,theme_nav_fixed)
+
+
+		token := info.Token{}
+		token.UserId = user.UserId
+		token.Email = "admin@leanote.com"
+		token.Token = NewGuidWith(token.Email)
+		token.Type = 1
+		token.CreatedTime =  user.CreatedTime
+		Insert(Tokens,token)
+
+
+		user_blog := info.UserBlog{}
+		user_blog.UserId = user.UserId
+		user_blog.Title = "Leanote's Blog"
+		user_blog.SubTitle = "I love Leanote!"
+		user_blog.AboutMe = "<p>Hello, 大家好, 我是leanote, 赶紧来体验leanote吧!!</p>"
+		user_blog.CanComment = true
+		user_blog.CommentType = "default"
+		user_blog.DisqusId =  "leanote"
+		user_blog.Style = "blog_daqi"
+		user_blog.ThemeId = theme_elegant.ThemeId
+		user_blog.Singles = []map[string]string{
+													map[string]string{ "SingleId" : blog_single.SingleId.Hex(), "Title" : "About Me", "UrlTitle" : "About-Me" },
+												}
+		Insert(UserBlogs,user_blog)
+
+	}
 }
 
 func close() {

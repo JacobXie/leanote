@@ -3,9 +3,9 @@ package service
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/leanote/leanote/app/db"
-	"github.com/leanote/leanote/app/info"
-	. "github.com/leanote/leanote/app/lea"
+	"github.com/JacobXie/leanote/app/db"
+	"github.com/JacobXie/leanote/app/info"
+	. "github.com/JacobXie/leanote/app/lea"
 	"github.com/revel/revel"
 	"gopkg.in/mgo.v2/bson"
 	"io/ioutil"
@@ -98,11 +98,17 @@ func (this *FileService) DeleteImage(userId, fileId string) (bool, string) {
 			// TODO
 			file.Path = strings.TrimLeft(file.Path, "/")
 			var err error
-			if strings.HasPrefix(file.Path, "upload") {
-				Log(file.Path)
-				err = os.Remove(revel.BasePath + "/public/" + file.Path)
-			} else {
-				err = os.Remove(revel.BasePath + "/" + file.Path)
+			//modified by JacobXie
+			if qiniuService.IsUseQiniu(){
+				err = qiniuService.DeleteOnQiniu(file.Path)
+			}	else {
+
+				if strings.HasPrefix(file.Path, "upload") {
+					Log(file.Path)
+					err = os.Remove(revel.BasePath + "/public/" + file.Path)
+				} else {
+					err = os.Remove(revel.BasePath + "/" + file.Path)
+				}
 			}
 			if err == nil {
 				return true, ""
@@ -132,9 +138,16 @@ func (this *FileService) GetFileBase64(userId, fileId string) (str string, mine 
 		return "", ""
 	}
 
-	path = revel.BasePath + "/" + strings.TrimLeft(path, "/")
+	//modified by JacobXie
+	var ff []byte
+	var err error
+	if qiniuService.IsUseQiniu(){
+		ff,err = qiniuService.GetFileOnQiniu(strings.TrimLeft(path, "/"))
+	}	else {
+		path = revel.BasePath + "/" + strings.TrimLeft(path, "/")
+		ff,err = ioutil.ReadFile(path)
+	}
 
-	ff, err := ioutil.ReadFile(path)
 	if err != nil {
 		return "", ""
 	}
@@ -265,15 +278,21 @@ func (this *FileService) CopyImage(userId, fileId, toUserId string) (bool, strin
 
 	dir := "files/" + toUserId + "/images"
 	filePath := dir + "/" + newFilename
-	err := os.MkdirAll(dir, 0755)
-	if err != nil {
-		return false, ""
-	}
+	//modified by JacobXie
+	var err error
+	if qiniuService.IsUseQiniu(){
+		err = qiniuService.CopyOnQiniu(file.Path, filePath)
+	} else {
+		err = os.MkdirAll(dir, 0755)
+		if err != nil {
+			return false, ""
+		}
 
-	_, err = CopyFile(revel.BasePath+"/"+file.Path, revel.BasePath+"/"+filePath)
-	if err != nil {
+		_, err = CopyFile(revel.BasePath+"/"+file.Path, revel.BasePath+"/"+filePath)
+	}
+	if err != nil{
 		Log(err)
-		return false, ""
+		return false,""
 	}
 
 	fileInfo := info.File{Name: newFilename,

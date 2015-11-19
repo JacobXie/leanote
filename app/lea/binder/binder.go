@@ -1,10 +1,10 @@
 package binder
 
 import (
-	"github.com/leanote/leanote/app/controllers"
-	"github.com/leanote/leanote/app/info"
+	"github.com/JacobXie/leanote/app/controllers"
+	"github.com/JacobXie/leanote/app/info"
 	"github.com/revel/revel"
-	//	"github.com/leanote/leanote/app/controllers/api"
+	//	"github.com/JacobXie/leanote/app/controllers/api"
 	"fmt"
 	"reflect"
 	"strings"

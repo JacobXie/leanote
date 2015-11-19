@@ -6,8 +6,8 @@ import (
 	"archive/tar"
 	"compress/gzip"
 	"fmt"
-	"github.com/leanote/leanote/app/info"
-	. "github.com/leanote/leanote/app/lea"
+	"github.com/JacobXie/leanote/app/info"
+	. "github.com/JacobXie/leanote/app/lea"
 	"gopkg.in/mgo.v2/bson"
 	"io"
 	"io/ioutil"
@@ -52,35 +52,59 @@ func (c Attach) uploadAttach(noteId string) (re info.Re) {
 	}
 	defer file.Close()
 
-	data, err := ioutil.ReadAll(file)
-	if err != nil {
-		return re
-	}
+	// 生成上传路径
+	filePath := "files/" + c.GetUserId() + "/attachs"
+
+	// 生成新的文件名
+	filename := handel.Filename
+	_, ext := SplitFilename(filename) // .doc
+	filename = NewGuid() + ext
+
 	// > 5M?
 	maxFileSize := configService.GetUploadSize("uploadAttachSize")
 	if maxFileSize <= 0 {
 		maxFileSize = 1000
 	}
-	if float64(len(data)) > maxFileSize*float64(1024*1024) {
+	//modified by JacobXie
+	//filesize = int64(len(data))
+	var filesize int64
+	// 获取文件大小的接口
+	type Sizer interface {
+			Size() int64
+	}
+
+	if sizeInterface, ok := file.(Sizer); ok {
+			filesize = sizeInterface.Size()
+	}
+
+	if float64(filesize) > maxFileSize*float64(1024*1024) {
 		resultMsg = fmt.Sprintf("The file's size is bigger than %vM", maxFileSize)
 		return re
 	}
 
-	// 生成上传路径
-	filePath := "files/" + c.GetUserId() + "/attachs"
-	dir := revel.BasePath + "/" + filePath
-	err = os.MkdirAll(dir, 0755)
-	if err != nil {
-		return re
-	}
-	// 生成新的文件名
-	filename := handel.Filename
-	_, ext := SplitFilename(filename) // .doc
-	filename = NewGuid() + ext
-	toPath := dir + "/" + filename
-	err = ioutil.WriteFile(toPath, data, 0777)
-	if err != nil {
-		return re
+	if qiniuService.IsUseQiniu(){
+		toPath := filePath + "/" + filename
+		err := qiniuService.Upload2Qiniu(toPath,file,filesize)
+		if err != nil {
+			return re
+		}
+	} else {
+		data, err := ioutil.ReadAll(file)
+		if err != nil {
+			return re
+		}
+		dir := revel.BasePath + "/" + filePath
+		err = os.MkdirAll(dir, 0755)
+		if err != nil {
+			return re
+		}
+
+		toPath := dir + "/" + filename
+		err = ioutil.WriteFile(toPath, data, 0777)
+		if err != nil {
+			return re
+		}
+		filesize = GetFilesize(toPath)
 	}
 
 	// add File to db
@@ -88,7 +112,7 @@ func (c Attach) uploadAttach(noteId string) (re info.Re) {
 	if ext != "" {
 		fileType = strings.ToLower(ext[1:])
 	}
-	filesize := GetFilesize(toPath)
+
 	fileInfo = info.Attach{Name: filename,
 		Title:        handel.Filename,
 		NoteId:       bson.ObjectIdHex(noteId),
@@ -135,17 +159,28 @@ func (c Attach) Download(attachId string) revel.Result {
 	if path == "" {
 		return c.RenderText("")
 	}
-	fn := revel.BasePath + "/" + strings.TrimLeft(path, "/")
-	file, _ := os.Open(fn)
-	return c.RenderBinary(file, attach.Title, revel.Attachment, time.Now()) // revel.Attachment
+	//modified by JacobXie
+	if qiniuService.IsUseQiniu(){
+		return c.Redirect(qiniuService.GetUrlOnQiniu(strings.TrimLeft(path,"/")))
+	} else {
+		fn := revel.BasePath + "/" + strings.TrimLeft(path, "/")
+		file, _ := os.Open(fn)
+		return c.RenderBinary(file, attach.Title, revel.Attachment, time.Now()) // revel.Attachment
+	}
 	// return c.RenderFile(file, revel.Attachment) // revel.Attachment
 }
 
 func (c Attach) DownloadAll(noteId string) revel.Result {
+	//modified by JacobXie
+	//如果使用七牛，不支持打包下载
+	if qiniuService.IsUseQiniu(){
+		return c.RenderText("")
+	}
 	note := noteService.GetNoteById(noteId)
 	if note.NoteId == "" {
 		return c.RenderText("")
 	}
+
 	// 得到文件列表
 	attachs := attachService.ListAttachs(noteId, c.GetUserId())
 	if attachs == nil || len(attachs) == 0 {

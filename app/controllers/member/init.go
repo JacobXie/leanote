@@ -1,9 +1,9 @@
 package member
 
 import (
-	"github.com/leanote/leanote/app/info"
-	"github.com/leanote/leanote/app/service"
-	//	. "github.com/leanote/leanote/app/lea"
+	"github.com/JacobXie/leanote/app/info"
+	"github.com/JacobXie/leanote/app/service"
+	//	. "github.com/JacobXie/leanote/app/lea"
 	"github.com/revel/revel"
 	//	"strings"
 )
@@ -29,6 +29,8 @@ var configService *service.ConfigService
 var emailService *service.EmailService
 var upgradeService *service.UpgradeService
 var themeService *service.ThemeService
+//modified by JacobXie
+var qiniuService *service.QiniuService
 
 // 拦截器
 // 不需要拦截的url
@@ -123,6 +125,8 @@ func InitService() {
 	emailService = service.EmailS
 	upgradeService = service.UpgradeS
 	themeService = service.ThemeS
+	//modified by JacobXie
+	qiniuService = service.QiniuS
 }
 
 func init() {

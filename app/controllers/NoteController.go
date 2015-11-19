@@ -4,15 +4,15 @@ import (
 	"github.com/revel/revel"
 	//	"encoding/json"
 	"fmt"
-	"github.com/leanote/leanote/app/info"
-	. "github.com/leanote/leanote/app/lea"
+	"github.com/JacobXie/leanote/app/info"
+	. "github.com/JacobXie/leanote/app/lea"
 	"gopkg.in/mgo.v2/bson"
 	"os"
 	"os/exec"
 	"regexp"
 	"strings"
 	"time"
-	//	"github.com/leanote/leanote/app/types"
+	//	"github.com/JacobXie/leanote/app/types"
 	//	"io/ioutil"
 	//	"bytes"
 	//	"os"
@@ -413,6 +413,7 @@ func (c Note) ToPdf(noteId, appKey string) revel.Result {
 
 // 导出成PDF
 func (c Note) ExportPdf(noteId string) revel.Result {
+	L("Export PDF begin")
 	re := info.NewRe()
 	userId := c.GetUserId()
 	note := noteService.GetNoteById(noteId)
@@ -434,10 +435,12 @@ func (c Note) ExportPdf(noteId string) revel.Result {
 	// path 判断是否需要重新生成之
 	guid := NewGuid()
 	fileUrlPath := "files/" + Digest3(noteUserId) + "/" + noteUserId + "/" + Digest2(guid) + "/images/pdf"
+
 	dir := revel.BasePath + "/" + fileUrlPath
 	if !MkdirAll(dir) {
 		return c.RenderText("error, no dir")
 	}
+
 	filename := guid + ".pdf"
 	path := dir + "/" + filename
 
@@ -446,7 +449,6 @@ func (c Note) ExportPdf(noteId string) revel.Result {
 	if appKey == "" {
 		appKey, _ = revel.Config.String("app.secret")
 	}
-
 	// 生成之
 	binPath := configService.GetGlobalStringConfig("exportPdfBinPath")
 	// 默认路径
@@ -485,6 +487,7 @@ func (c Note) ExportPdf(noteId string) revel.Result {
 	} else {
 		filenameReturn += ".pdf"
 	}
+
 	return c.RenderBinary(file, filenameReturn, revel.Attachment, time.Now()) // revel.Attachment
 }
 

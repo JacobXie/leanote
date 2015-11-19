@@ -1,9 +1,9 @@
 package admin
 
 import (
-	"github.com/leanote/leanote/app/info"
-	"github.com/leanote/leanote/app/service"
-	//	. "github.com/leanote/leanote/app/lea"
+	"github.com/JacobXie/leanote/app/info"
+	"github.com/JacobXie/leanote/app/service"
+	//	. "github.com/JacobXie/leanote/app/lea"
 	"github.com/revel/revel"
 	//	"strings"
 )
@@ -27,6 +27,8 @@ var attachService *service.AttachService
 var configService *service.ConfigService
 var emailService *service.EmailService
 var upgradeService *service.UpgradeService
+//modified by JacobXie
+var qiniuService *service.QiniuService
 
 // 拦截器
 // 不需要拦截的url
@@ -119,6 +121,8 @@ func InitService() {
 	configService = service.ConfigS
 	emailService = service.EmailS
 	upgradeService = service.UpgradeS
+	//modified by JacobXie
+	qiniuService = service.QiniuS
 }
 
 func init() {
